@@ -11,12 +11,13 @@ sql:
 <div class="grid grid-cols-2">
     <div class="card">
         <h1>Projection Basis</h1>
-        <p>based on ${d3.sum(baseGroupsSelected.map(d => d['nr of Samples']))} modern samples in ${baseGroupsSelected.length} groups</p>
-        ${basePositionsPlot}
+        <div>${basePositionsPlot}</div>
     </div>
     <div class="card">
         <h1>Base Population Selection</h1>
-        <p>based on modern data. Select groups from the table, sort by clicking on the headers.</p>${baseGroupTable}
+        <p>based on modern data. Select groups from the table, sort by clicking on the headers.</p>
+        <div>${baseGroupTable}</div>
+        <p>Selected ${d3.sum(baseGroupsSelected.map(d => d['nr of Samples']))} modern samples in ${baseGroupsSelected.length} groups</p>
     </div>
 </div>
 <div class="grid grid-cols-2">
@@ -45,18 +46,31 @@ const baseGroupsSelected = Generators.input(baseGroupTable);
 ```
 
 ```js
-const q = `SELECT P.* FROM pcPositions AS P JOIN baseGroups BG ON P.Group = BG.Group WHERE P.Group IN (${baseGroupsSelected.map(d => d.Group)})`;
+let filter_cond = '';
+if(baseGroupsSelected.length == 1)
+    filter_cond = `WHERE P.Group = '${baseGroupsSelected[0].Group}'`;
+if(baseGroupsSelected.length > 1)
+    filter_cond = `WHERE P.GROUP IN (${baseGroupsSelected.map(d => `'${d.Group}'`)})`;
+const q = `SELECT P.* FROM pcPositions AS P JOIN baseGroups BG ON P.Group = BG.Group ${filter_cond};`;
 const basePositionsSelected = sql([q]);
 ```
 
 ```js
 const basePositionsPlot = Plot.plot({
     marks: [
+        Plot.dot(basePositionsAll, {
+            x: "PC1",
+            y: "PC2",
+            fill: "gray",
+            r: 2,
+            fillOpacity: 0.2
+        }),
         Plot.dot(basePositionsSelected, {
             x: "PC1",
             y: "PC2",
             fill: "Group",
-            r: 3}),
+            r: 3,
+            fillOpacity: 0.7}),
     ]
 })
 ```
